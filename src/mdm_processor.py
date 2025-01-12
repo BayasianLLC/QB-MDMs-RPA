@@ -134,10 +134,10 @@ def upload_to_quickbase(csv_file):
         
         # QuickBase configuration
         qb_client = QuickBaseClient({
-            'realm_hostname': 'your_quickbase_domain.quickbase.com',
-            'user_token': 'your_user_token',  # QB API token
-            'app_id': 'your_app_id',          # QB application ID
-            'table_id': 'your_table_id'       # QB table ID
+            'realm_hostname': 'wesco.quickbase.com',
+            'user_token': 'cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',  # QB API token
+            'app_id': 'bfdix6cda',          # QB application ID
+            'table_id': 'butqctiz3'       # QB table ID
         })
         
         # Read CSV file
@@ -146,9 +146,9 @@ def upload_to_quickbase(csv_file):
         
         # Upload to QuickBase
         response = qb_client.import_from_csv(
-            table_id='your_table_id',
+            table_id='butqctiz3',
             csv_file=csv_data,
-            merge_field_id=None,  # Set if you want to update existing records
+            merge_field_id="MDM_Sort",  # Set if you want to update existing records
             import_as_admin=True
         )
         

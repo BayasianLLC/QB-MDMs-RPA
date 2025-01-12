@@ -16,7 +16,11 @@ class MDMTable(QuickBaseTable):
 def get_sharepoint_context():
    
    # SharePoint credentials and site URL
+<<<<<<< HEAD
    sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
+=======
+   sharepoint_url = "https://wescodsharepoint.com/sites/SalesOpsRPA"
+>>>>>>> df950ee0482ca0f9ebc7c8d0e31204af52388bc6
    username = "JuanCarlos.Bayas@wescodist.com"
    password = "DhkofiL@512345"
    

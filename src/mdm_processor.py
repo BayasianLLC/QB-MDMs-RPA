@@ -14,7 +14,7 @@ class MDMTable(QuickBaseTable):
     app = QuickBaseApp(
         app_id='bfdix6cda',      # Replace with your app ID
         realm_hostname='wesco.quickbase.com'
-        name='ALL
+        name='1. All Branch Alliance Scorecards and Stock Status'
     )
 
 def get_sharepoint_context():

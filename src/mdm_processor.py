@@ -3,23 +3,26 @@ import os
 from datetime import datetime
 from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
+from office365.runtime.auth.authentication_context import AuthenticationContext
 import time
 from quickbase_client import QuickBaseApiClient
 
 def get_sharepoint_context():
+   
    # SharePoint credentials and site URL
    sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
    username = "JuanCarlos.Bayas@wescodist.com"
-   password = "DhkofiL@512345"  # Remember to secure this
+   password = "DhkofiL@512345"
    
    try:
-       ctx = ClientContext(sharepoint_url).with_credentials(
-           UserCredential(username, password)
-       )
-       return ctx
+    auth_context = AuthenticationContext(sharepoint_url)
+    auth_context.acquire_token_for_user(username, password)
+    ctx = ClientContext(sharepoint_url, auth_context)
+    return ctx
+   
    except Exception as e:
-       print(f"Error connecting to SharePoint: {str(e)}")
-       return None
+    print(f"Error connecting to SharePoint: {str(e)}")
+    return None
 
 def check_new_files(ctx, last_check_time):
     try:

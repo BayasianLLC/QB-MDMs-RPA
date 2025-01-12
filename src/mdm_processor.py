@@ -5,18 +5,23 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.authentication_context import AuthenticationContext
 import time
-from quickbase_client import QuickbaseTableClient, QuickBaseTable, QuickBaseApp
+from quickbase_client.orm.table import QuickbaseTable
+from quickbase_client.orm.app import QuickbaseApp
+from quickbase_client import QuickbaseTableClient
 from io import BytesIO
 
-class MDMTable(QuickBaseTable):  # Note: it should be QuickbaseTable, not QuickBaseTable
+class MDMTable(QuickbaseTable):  # Note: it should be QuickbaseTable, not QuickBaseTable
     dbid = 'butqctiz3'   
-    tablename = 'PSEG MASTER'    
-    app = QuickBaseApp(  # Note: QuickbaseApp, not QuickBaseApp
+    tablename = 'Test for PSEG MASTER'    
+    app = QuickbaseApp( 
         app_id='bfdix6cda',      
         realm_hostname='wesco.quickbase.com',
         name='1. All Branch Alliance Scorecards and Stock Status'
     )
 
+    @classmethod
+    def get_real_hostname(cls):
+        return cls.app.realm_hostname
 
 def get_sharepoint_context():
    
@@ -99,7 +104,6 @@ def upload_to_quickbase(csv_file):
         qb_client = QuickbaseTableClient(
             table=MDMTable,
             user_token='cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
-            realm_hostname='wesco.quickbase.com'  # Explicitly provide realm hostname
         )
         
         # Read CSV file into pandas

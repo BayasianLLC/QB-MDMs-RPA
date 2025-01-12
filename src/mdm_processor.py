@@ -4,6 +4,7 @@ from datetime import datetime
 from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 import time
+from quickbase_client import QuickBaseClient
 
 def get_sharepoint_context():
    # SharePoint credentials and site URL
@@ -50,30 +51,37 @@ def check_new_files(ctx, last_check_time):
         return []
 
 def transform_mdm_file(file_content, output_file):
-   try:
-       print("Starting file transformation...")
-       # Read XLSB from memory
-       df = pd.read_excel(file_content, engine='pyxlsb')
-       
-       print("File read successfully. Processing data...")
-       # Get the first row as column names
-       df.columns = df.iloc[0]
-       
-       # Keep first 88 columns
-       df = df.iloc[:, :88]
-       
-       # Remove the original header row and the row after it
-       df = df.iloc[2:].reset_index(drop=True)
-       
-       print(f"Saving processed file to: {output_file}")
-       # Save to CSV
-       df.to_csv(output_file, index=False)
-       print(f"Successfully transformed file to: {output_file}")
-       return True
-       
-   except Exception as e:
-       print(f"Error processing file: {str(e)}")
-       return False
+    try:
+        print("Starting file transformation...")
+        # Read XLSB from memory
+        df = pd.read_excel(file_content, engine='pyxlsb')
+        
+        print("File read successfully. Processing data...")
+        # Get the first row as column names
+        df.columns = df.iloc[0]
+        
+        # Keep first 88 columns
+        df = df.iloc[:, :88]
+        
+        # Remove the original header row and the row after it
+        df = df.iloc[2:].reset_index(drop=True)
+        
+        print(f"Saving processed file to: {output_file}")
+        # Save to CSV
+        df.to_csv(output_file, index=False)
+        print(f"Successfully transformed file to: {output_file}")
+        
+        # Upload to QuickBase
+        if upload_to_quickbase(output_file):
+            print("File successfully uploaded to QuickBase")
+            return True
+        else:
+            print("Failed to upload to QuickBase")
+            return False
+        
+    except Exception as e:
+        print(f"Error processing file: {str(e)}")
+        return False
 
 def main():
    print("Initializing SharePoint connection...")
@@ -119,6 +127,37 @@ def main():
            print(f"Error in main loop: {str(e)}")
            print("Waiting 1 minute before retrying...")
            time.sleep(60)  # Wait a minute before retrying
+
+def upload_to_quickbase(csv_file):
+    try:
+        print("Initiating QuickBase upload...")
+        
+        # QuickBase configuration
+        qb_client = QuickBaseClient({
+            'realm_hostname': 'your_quickbase_domain.quickbase.com',
+            'user_token': 'your_user_token',  # QB API token
+            'app_id': 'your_app_id',          # QB application ID
+            'table_id': 'your_table_id'       # QB table ID
+        })
+        
+        # Read CSV file
+        with open(csv_file, 'rb') as f:
+            csv_data = f.read()
+        
+        # Upload to QuickBase
+        response = qb_client.import_from_csv(
+            table_id='your_table_id',
+            csv_file=csv_data,
+            merge_field_id=None,  # Set if you want to update existing records
+            import_as_admin=True
+        )
+        
+        print(f"QuickBase upload successful. Records processed: {response.get('number_records_processed', 0)}")
+        return True
+        
+    except Exception as e:
+        print(f"Error uploading to QuickBase: {str(e)}")
+        return False
 
 if __name__ == "__main__":
    main()

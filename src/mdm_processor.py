@@ -1,6 +1,8 @@
+import json
 import pandas as pd
 import os
 from datetime import datetime
+import requests
 from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.authentication_context import AuthenticationContext
@@ -95,25 +97,55 @@ def upload_to_quickbase(csv_file):
     try:
         print("Initiating QuickBase upload...")
         
-        # Initialize the QuickBase client with explicit realm hostname
-        qb_client = QuickbaseTableClient(
-            table=MDMTable,
-            user_token='cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
-            realm_hostname='wesco.quickbase.com'  # Explicitly provide realm hostname
-        )
+        # QuickBase API Configuration
+        headers = {
+            'Content-Type': 'application/json',
+            'QB-Realm-Hostname': 'wesco.quickbase.com',
+            'User-Agent': 'PSEG_MDM_Integration_V1.0',
+            'Authorization': 'QB-USER-TOKEN cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45'
+        }
         
-        # Read CSV file into pandas
+        # API Parameters
+        params = {
+            'appId': 'bfdix6cda'  # Your QuickBase app ID
+        }
+        
+        # Table ID for update
+        table_id = 'butqctiz3'  # Your QuickBase table ID
+        
+        # Read CSV file
         df = pd.read_csv(csv_file)
+        print(f"Read {len(df)} records from CSV")
         
-        # Convert DataFrame to list of dictionaries for QuickBase
+        # Convert to QuickBase format
         records = df.to_dict('records')
         
-        # Upload records
-        response = qb_client.add_records(records)
+        # Prepare request body
+        body = {
+            'data': records
+        }
         
-        print(f"QuickBase upload successful. Records processed: {len(records)}")
-        return True
+        # Make API request
+        api_url = f'https://api.quickbase.com/v1/tables/{table_id}'
         
+        print("Sending request to QuickBase...")
+        response = requests.post(
+            api_url,
+            params=params,
+            headers=headers,
+            json=body
+        )
+        
+        # Check response
+        if response.status_code == 200:
+            print("Upload successful!")
+            print(json.dumps(response.json(), indent=4))
+            return True
+        else:
+            print(f"Upload failed with status code: {response.status_code}")
+            print(response.text)
+            return False
+            
     except Exception as e:
         print(f"Error uploading to QuickBase: {str(e)}")
         return False

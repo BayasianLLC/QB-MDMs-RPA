@@ -5,13 +5,18 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.authentication_context import AuthenticationContext
 import time
-from quickbase_client import QuickBaseApiClient
+from quickbase_client import QuickbaseTableClient, QuickBaseTable
 from io import BytesIO
+
+class MDMTable(QuickBaseTable):
+    dbid = "butqctiz3"
+    app_id = "bfdix6cda"
+    realm_hostname = 'wesco.quickbase.com'
 
 def get_sharepoint_context():
    
    # SharePoint credentials and site URL
-   sharepoint_url = "https://wesco.sharepoint.com/sites/SalesOpsRPA"
+   sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
    username = "JuanCarlos.Bayas@wescodist.com"
    password = "DhkofiL@512345"
    
@@ -88,6 +93,8 @@ def transform_mdm_file(file_content, output_file):
         print(f"Error processing file: {str(e)}")
         return False
 
+
+
 def main():
    print("Initializing SharePoint connection...")
    ctx = get_sharepoint_context()
@@ -140,9 +147,7 @@ def upload_to_quickbase(csv_file):
         # QuickBase configuration
         qb_client = QuickBaseApiClient(
             realm_hostname= 'wesco.quickbase.com',
-            user_token= 'cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',  # QB API token
-            app_id= 'bfdix6cda',          # QB application ID
-            table_id= 'butqctiz3'       # QB table ID
+            user_token= 'cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',  # QB API token 
         )
         
         # Read CSV file

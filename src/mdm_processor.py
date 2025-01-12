@@ -11,7 +11,7 @@ from io import BytesIO
 def get_sharepoint_context():
    
    # SharePoint credentials and site URL
-   sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
+   sharepoint_url = "https://wesco.sharepoint.com/sites/SalesOpsRPA"
    username = "JuanCarlos.Bayas@wescodist.com"
    password = "DhkofiL@512345"
    

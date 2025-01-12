@@ -6,6 +6,7 @@ from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.authentication_context import AuthenticationContext
 import time
 from quickbase_client import QuickBaseApiClient
+from io import BytesIO
 
 def get_sharepoint_context():
    
@@ -32,7 +33,7 @@ def check_new_files(ctx, last_check_time):
         web_url = ctx.web.properties['ServerRelativeUrl']
         
         # Construct the full folder path
-        folder_path = f"{web_url}/Shared%20Documents/Forms/AllItems.aspx"
+        folder_path = f"{web_url}/Shared%20Documents"
         
         print(f"Accessing folder: {folder_path}")
         
@@ -57,6 +58,7 @@ def transform_mdm_file(file_content, output_file):
     try:
         print("Starting file transformation...")
         # Read XLSB from memory
+        excel_data = BytesIO(file_content)
         df = pd.read_excel(file_content, engine='pyxlsb')
         
         print("File read successfully. Processing data...")
@@ -112,7 +114,7 @@ def main():
                
                # Create output filename
                output_file = os.path.join(
-                   r"C:\Users\sabar\Desktop",
+                   r"C:\Users\e329808\OneDrive - Wesco\Documents\QB MDM Updates",
                    file.properties["Name"].replace('.xlsb', '.csv')
                )
                
@@ -136,12 +138,12 @@ def upload_to_quickbase(csv_file):
         print("Initiating QuickBase upload...")
         
         # QuickBase configuration
-        qb_client = QuickBaseClient({
-            'realm_hostname': 'wesco.quickbase.com',
-            'user_token': 'cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',  # QB API token
-            'app_id': 'bfdix6cda',          # QB application ID
-            'table_id': 'butqctiz3'       # QB table ID
-        })
+        qb_client = QuickBaseApiClient(
+            realm_hostname= 'wesco.quickbase.com',
+            user_token= 'cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',  # QB API token
+            app_id= 'bfdix6cda',          # QB application ID
+            table_id= 'butqctiz3'       # QB table ID
+        )
         
         # Read CSV file
         with open(csv_file, 'rb') as f:

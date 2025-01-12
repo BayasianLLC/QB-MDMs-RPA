@@ -4,13 +4,13 @@ from datetime import datetime
 from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 import time
-from quickbase_client import QuickBaseClient
+from quickbase_client import QuickBaseApiClient
 
 def get_sharepoint_context():
    # SharePoint credentials and site URL
-   sharepoint_url = "https://wesco.sharepoint.com/sites/MasterDataRequest"
-   username = ""
-   password = "ni2b:+AANpP?N7w"  # Remember to secure this
+   sharepoint_url = "https://wesco.sharepoint.com/sites/SalesOpsRPA"
+   username = "JuanCarlos.Bayas@wescodist.com"
+   password = "DhkofiL@512345"  # Remember to secure this
    
    try:
        ctx = ClientContext(sharepoint_url).with_credentials(
@@ -29,7 +29,7 @@ def check_new_files(ctx, last_check_time):
         web_url = ctx.web.properties['ServerRelativeUrl']
         
         # Construct the full folder path
-        folder_path = f"{web_url}/Shared Documents/Forms/AllItems.aspx"
+        folder_path = f"{web_url}/Shared%20Documents/Forms/AllItems.aspx"
         
         print(f"Accessing folder: {folder_path}")
         

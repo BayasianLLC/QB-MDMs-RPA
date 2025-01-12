@@ -7,8 +7,8 @@ import time
 
 def get_sharepoint_context():
    # SharePoint credentials and site URL
-   sharepoint_url = "https://stdntpartners.sharepoint.com/sites/MasterDataRequest"
-   username = "victor.sabare@studentambassadors.com"
+   sharepoint_url = "https://wesco.sharepoint.com/sites/MasterDataRequest"
+   username = ""
    password = "ni2b:+AANpP?N7w"  # Remember to secure this
    
    try:

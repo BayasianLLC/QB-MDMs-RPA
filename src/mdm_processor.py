@@ -92,7 +92,10 @@ def upload_to_quickbase(csv_file):
         
         # Initialize the QuickBase client
         qb_client = MDMTable.client(
-            user_token='your_user_token'
+            user_token='cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
+            realm_hostname=MDMTable.realm_hostname,
+            app_id=MDMTable.app_id,
+            dbid=MDMTable.dbid,
         )
         
         # Read CSV file into pandas

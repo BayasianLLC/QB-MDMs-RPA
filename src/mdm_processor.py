@@ -16,11 +16,7 @@ class MDMTable(QuickBaseTable):
 def get_sharepoint_context():
    
    # SharePoint credentials and site URL
-<<<<<<< HEAD
    sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
-=======
-   sharepoint_url = "https://wescodsharepoint.com/sites/SalesOpsRPA"
->>>>>>> df950ee0482ca0f9ebc7c8d0e31204af52388bc6
    username = "JuanCarlos.Bayas@wescodist.com"
    password = "DhkofiL@512345"
    
@@ -66,24 +62,17 @@ def check_new_files(ctx, last_check_time):
 def transform_mdm_file(file_content, output_file):
     try:
         print("Starting file transformation...")
-        # Read XLSB from memory
+        # Use BytesIO for Excel file
         excel_data = BytesIO(file_content)
-        df = pd.read_excel(file_content, engine='pyxlsb')
+        df = pd.read_excel(excel_data, engine='pyxlsb')
         
         print("File read successfully. Processing data...")
-        # Get the first row as column names
         df.columns = df.iloc[0]
-        
-        # Keep first 88 columns
         df = df.iloc[:, :88]
-        
-        # Remove the original header row and the row after it
         df = df.iloc[2:].reset_index(drop=True)
         
         print(f"Saving processed file to: {output_file}")
-        # Save to CSV
         df.to_csv(output_file, index=False)
-        print(f"Successfully transformed file to: {output_file}")
         
         # Upload to QuickBase
         if upload_to_quickbase(output_file):
@@ -97,7 +86,33 @@ def transform_mdm_file(file_content, output_file):
         print(f"Error processing file: {str(e)}")
         return False
 
-
+def upload_to_quickbase(csv_file):
+    try:
+        print("Initiating QuickBase upload...")
+        
+        # Initialize the QuickBase client
+        qb_client = MDMTable.client(
+            user_token='your_user_token'
+        )
+        
+        # Read CSV file into pandas
+        df = pd.read_csv(csv_file)
+        
+        # Convert DataFrame to list of dictionaries for QuickBase
+        records = df.to_dict('records')
+        
+        # Upload records
+        response = qb_client.add_records(
+            recs=records,
+            fields_to_return=None  # Returns all fields
+        )
+        
+        print(f"QuickBase upload successful. Records processed: {len(records)}")
+        return True
+        
+    except Exception as e:
+        print(f"Error uploading to QuickBase: {str(e)}")
+        return False
 
 def main():
    print("Initializing SharePoint connection...")
@@ -144,34 +159,6 @@ def main():
            print("Waiting 1 minute before retrying...")
            time.sleep(60)  # Wait a minute before retrying
 
-def upload_to_quickbase(csv_file):
-    try:
-        print("Initiating QuickBase upload...")
-        
-        # QuickBase configuration
-        qb_client = QuickBaseApiClient(
-            realm_hostname= 'wesco.quickbase.com',
-            user_token= 'cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',  # QB API token 
-        )
-        
-        # Read CSV file
-        with open(csv_file, 'rb') as f:
-            csv_data = f.read()
-        
-        # Upload to QuickBase
-        response = qb_client.import_from_csv(
-            table_id='butqctiz3',
-            csv_file=csv_data,
-            merge_field_id="MDM_Sort",  # Set if you want to update existing records
-            import_as_admin=True
-        )
-        
-        print(f"QuickBase upload successful. Records processed: {response.get('number_records_processed', 0)}")
-        return True
-        
-    except Exception as e:
-        print(f"Error uploading to QuickBase: {str(e)}")
-        return False
 
 if __name__ == "__main__":
    main()

@@ -8,14 +8,15 @@ import time
 from quickbase_client import QuickbaseTableClient, QuickBaseTable, QuickBaseApp
 from io import BytesIO
 
-class MDMTable(QuickBaseTable):
-    dbid = 'butqctiz3'   # Replace with your table ID
-    tablename = 'PSEG MASTER'    # Your table name
-    app = QuickBaseApp(
-        app_id='bfdix6cda',      # Replace with your app ID
+class MDMTable(QuickBaseTable):  # Note: it should be QuickbaseTable, not QuickBaseTable
+    dbid = 'butqctiz3'   
+    tablename = 'PSEG MASTER'    
+    app = QuickBaseApp(  # Note: QuickbaseApp, not QuickBaseApp
+        app_id='bfdix6cda',      
         realm_hostname='wesco.quickbase.com',
         name='1. All Branch Alliance Scorecards and Stock Status'
     )
+
 
 def get_sharepoint_context():
    
@@ -94,9 +95,11 @@ def upload_to_quickbase(csv_file):
     try:
         print("Initiating QuickBase upload...")
         
-        # Initialize the QuickBase client
-        qb_client = MDMTable.client(
+        # Initialize the QuickBase client with explicit realm hostname
+        qb_client = QuickbaseTableClient(
+            table=MDMTable,
             user_token='cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
+            realm_hostname='wesco.quickbase.com'  # Explicitly provide realm hostname
         )
         
         # Read CSV file into pandas
@@ -106,10 +109,7 @@ def upload_to_quickbase(csv_file):
         records = df.to_dict('records')
         
         # Upload records
-        response = qb_client.add_records(
-            recs=records,
-            fields_to_return=None  # Returns all fields
-        )
+        response = qb_client.add_records(records)
         
         print(f"QuickBase upload successful. Records processed: {len(records)}")
         return True

@@ -1,0 +1,4 @@
+pandas==2.0.0
+pyxlsb==1.0.10
+quickbase-client==0.9.0
+office365-rest-python-client==2.4.0

@@ -1,7 +1,7 @@
 # QB MDM Automation Project
 
 ## Overview
-This project automates the process of monitoring, downloading, and transforming PSEG MDM (Master Data Management) files from SharePoint to CSV format for QuickBase integration.
+This project automates the process of monitoring, downloading, and transforming QB applications MDM (Master Data Management) files from SharePoint to CSV format for QuickBase integration.
 
 ## Features
 - Automated SharePoint monitoring for new MDM files

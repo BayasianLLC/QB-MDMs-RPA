@@ -13,7 +13,7 @@ class MDMTable(QuickBaseTable):
     tablename = 'PSEG MASTER'    # Your table name
     app = QuickBaseApp(
         app_id='bfdix6cda',      # Replace with your app ID
-        realm_hostname='wesco.quickbase.com'
+        realm_hostname='wesco.quickbase.com',
         name='1. All Branch Alliance Scorecards and Stock Status'
     )
 

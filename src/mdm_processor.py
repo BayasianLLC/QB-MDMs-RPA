@@ -90,18 +90,22 @@ def upload_to_quickbase(csv_file):
     try:
         print("Initiating QuickBase upload...")
         
-        # Read CSV file with all columns as string type to avoid mixed types
+        # Read CSV file with all columns as string type
         df = pd.read_csv(csv_file, dtype=str, low_memory=False)
         print(f"Read {len(df)} records from CSV")
         
-        # If needed, convert specific columns to their proper types
-        numeric_columns = ['Last 12 Usage', 'Annual Times Purchased']
-        for col in numeric_columns:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+        # Replace NaN values with None (null in JSON)
+        df = df.replace({pd.NA: None, 'nan': None})
+        df = df.where(pd.notnull(df), None)
         
         # Convert to QuickBase format
         records = df.to_dict('records')
+        # Clean any remaining NaN values in the dictionary
+        for record in records:
+            for key, value in record.items():
+                if pd.isna(value) or value == 'nan':
+                    record[key] = None
+                    
         print("Converted data to QuickBase format")
         
         # QuickBase API Configuration

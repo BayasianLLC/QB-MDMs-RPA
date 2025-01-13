@@ -90,11 +90,13 @@ def upload_to_quickbase(csv_file):
     try:
         print("Initiating QuickBase upload...")
         
-        # Initialize the QuickBase client with explicit realm hostname
-        qb_client = QuickbaseTableClient(
-            table=MDMTable,
-            user_token='cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
-        )
+        # QuickBase API Configuration
+        headers = {
+            'Content-Type': 'application/json',
+            'QB-Realm-Hostname': 'wesco.quickbase.com',
+            'User-Agent': 'PSEG_MDM_Integration_V1.0',
+            'Authorization': 'QB-USER-TOKEN cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45'
+        }
         
         # API Parameters
         params = {
@@ -123,9 +125,10 @@ def upload_to_quickbase(csv_file):
         response = requests.post(
             api_url,
             params=params,
-            headers=headers, # type: ignore
+            headers=headers,
             json=body
         )
+        
         # Check response
         if response.status_code == 200:
             print("Upload successful!")

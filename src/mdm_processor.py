@@ -86,6 +86,7 @@ def transform_mdm_file(file_content, output_file):
         print(f"Error processing file: {str(e)}")
         return False
 
+
 def upload_to_quickbase(csv_file):
     try:
         print("Initiating QuickBase upload...")
@@ -94,21 +95,20 @@ def upload_to_quickbase(csv_file):
         df = pd.read_csv(csv_file, dtype=str, low_memory=False)
         print(f"Read {len(df)} records from CSV")
         
-        # Replace NaN values with None (null in JSON)
+        # Replace NaN values with None
         df = df.replace({pd.NA: None, 'nan': None})
         df = df.where(pd.notnull(df), None)
         
         # Convert to QuickBase format
         records = df.to_dict('records')
-        # Clean any remaining NaN values in the dictionary
         for record in records:
             for key, value in record.items():
                 if pd.isna(value) or value == 'nan':
                     record[key] = None
                     
         print("Converted data to QuickBase format")
+        print("Sending request to QuickBase...")
         
-        # QuickBase API Configuration
         headers = {
             'Content-Type': 'application/json',
             'QB-Realm-Hostname': 'wesco.quickbase.com',
@@ -123,12 +123,13 @@ def upload_to_quickbase(csv_file):
         table_id = 'butqctiz3'
         api_url = f'https://api.quickbase.com/v1/tables/{table_id}'
         
-        print("Sending request to QuickBase...")
+        # Add verify=False to bypass SSL verification
         response = requests.post(
             api_url,
             params=params,
             headers=headers,
-            json={'data': records}
+            json={'data': records},
+            verify=False  # Added this parameter
         )
         
         if response.status_code == 200:
@@ -142,6 +143,10 @@ def upload_to_quickbase(csv_file):
             
     except Exception as e:
         print(f"Error uploading to QuickBase: {str(e)}")
+        # Add more detailed error information
+        import traceback
+        print("Full error traceback:")
+        print(traceback.format_exc())
         return False
 
 def main():

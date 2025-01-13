@@ -12,18 +12,6 @@ from quickbase_client.orm.app import QuickbaseApp
 from quickbase_client import QuickbaseTableClient
 from io import BytesIO
 
-class MDMTable(QuickbaseTable):  # Note: it should be QuickbaseTable, not QuickBaseTable
-    dbid = 'butqctiz3'   
-    tablename = 'Test for PSEG MASTER'    
-    app = QuickbaseApp( 
-        app_id='bfdix6cda',      
-        realm_hostname='wesco.quickbase.com',
-        name='1. All Branch Alliance Scorecards and Stock Status'
-    )
-
-    @classmethod
-    def get_real_hostname(cls):
-        return cls.app.realm_hostname
 
 def get_sharepoint_context():
    

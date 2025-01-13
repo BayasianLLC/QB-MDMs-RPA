@@ -90,6 +90,20 @@ def upload_to_quickbase(csv_file):
     try:
         print("Initiating QuickBase upload...")
         
+        # Read CSV file with all columns as string type to avoid mixed types
+        df = pd.read_csv(csv_file, dtype=str, low_memory=False)
+        print(f"Read {len(df)} records from CSV")
+        
+        # If needed, convert specific columns to their proper types
+        numeric_columns = ['Last 12 Usage', 'Annual Times Purchased']
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
+        # Convert to QuickBase format
+        records = df.to_dict('records')
+        print("Converted data to QuickBase format")
+        
         # QuickBase API Configuration
         headers = {
             'Content-Type': 'application/json',
@@ -98,27 +112,11 @@ def upload_to_quickbase(csv_file):
             'Authorization': 'QB-USER-TOKEN cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45'
         }
         
-        # API Parameters
         params = {
-            'appId': 'bfdix6cda'  # Your QuickBase app ID
+            'appId': 'bfdix6cda'
         }
         
-        # Table ID for update
-        table_id = 'butqctiz3'  # Your QuickBase table ID
-        
-        # Read CSV file
-        df = pd.read_csv(csv_file)
-        print(f"Read {len(df)} records from CSV")
-        
-        # Convert to QuickBase format
-        records = df.to_dict('records')
-        
-        # Prepare request body
-        body = {
-            'data': records
-        }
-        
-        # Make API request
+        table_id = 'butqctiz3'
         api_url = f'https://api.quickbase.com/v1/tables/{table_id}'
         
         print("Sending request to QuickBase...")
@@ -126,10 +124,9 @@ def upload_to_quickbase(csv_file):
             api_url,
             params=params,
             headers=headers,
-            json=body
+            json={'data': records}
         )
         
-        # Check response
         if response.status_code == 200:
             print("Upload successful!")
             print(json.dumps(response.json(), indent=4))

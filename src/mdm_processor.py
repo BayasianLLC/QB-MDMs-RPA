@@ -16,10 +16,15 @@ from io import BytesIO
 def get_sharepoint_context():
    
    # SharePoint credentials and site URL
-   sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
-   username = "JuanCarlos.Bayas@wescodist.com"
-   password = "DhkofiL@512345"
+   # sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
+   # username = "JuanCarlos.Bayas@wescodist.com"
+   # password = "DhkofiL@512345"
    
+   sharepoint_url = "https://stdntpartners.sharepoint.com/sites/MDMQB"
+   username = "Victor.Sabare@studentambassadors.com"
+   password = "ni2b:+AANpP?N7w"
+
+
    try:
     auth_context = AuthenticationContext(sharepoint_url)
     auth_context.acquire_token_for_user(username, password)
@@ -50,8 +55,7 @@ def check_new_files(ctx, last_check_time):
         
         # Look for new XLSB files
         new_files = [f for f in files 
-                    if f.properties["TimeCreated"] > last_check_time 
-                    and "PSEG MDM" in f.properties["Name"]]
+                    if "PSEG MDM" in f.properties["Name"]]
         
         print(f"Found {len(new_files)} new files")
         return new_files
@@ -87,13 +91,14 @@ def transform_mdm_file(file_content, output_file):
         return False
 
 
-def upload_to_quickbase(csv_file):
+def upload_to_quickbase(csv_file, batch_size=1000):
     try:
         print("Initiating QuickBase upload...")
         
         # Read CSV file with all columns as string type
         df = pd.read_csv(csv_file, dtype=str, low_memory=False)
-        print(f"Read {len(df)} records from CSV")
+        total_records = len(df)
+        print(f"Read {total_records} records from CSV")
         
         # Replace NaN values with None
         df = df.replace({pd.NA: None, 'nan': None})
@@ -101,13 +106,10 @@ def upload_to_quickbase(csv_file):
         
         # Convert to QuickBase format
         records = df.to_dict('records')
-        for record in records:
-            for key, value in record.items():
-                if pd.isna(value) or value == 'nan':
-                    record[key] = None
-                    
-        print("Converted data to QuickBase format")
-        print("Sending request to QuickBase...")
+        
+        # Split records into batches
+        batches = [records[i:i + batch_size] for i in range(0, len(records), batch_size)]
+        print(f"Split data into {len(batches)} batches of {batch_size} records each")
         
         headers = {
             'Content-Type': 'application/json',
@@ -123,31 +125,40 @@ def upload_to_quickbase(csv_file):
         table_id = 'butqctiz3'
         api_url = f'https://api.quickbase.com/v1/tables/{table_id}'
         
-        # Add verify=False to bypass SSL verification
-        response = requests.post(
-            api_url,
-            params=params,
-            headers=headers,
-            json={'data': records},
-            verify=False  # Added this parameter
-        )
+        # Upload batches
+        total_uploaded = 0
+        for i, batch in enumerate(batches, 1):
+            print(f"\nUploading batch {i} of {len(batches)}...")
+            
+            response = requests.post(
+                api_url,
+                params=params,
+                headers=headers,
+                json={'data': batch},
+                verify=False
+            )
+            
+            if response.status_code == 200:
+                total_uploaded += len(batch)
+                print(f"Batch {i} uploaded successfully. Progress: {total_uploaded}/{total_records}")
+            else:
+                print(f"Batch {i} upload failed with status code: {response.status_code}")
+                print(response.text)
+                return False
+            
+            # Add a small delay between batches
+            time.sleep(1)
         
-        if response.status_code == 200:
-            print("Upload successful!")
-            print(json.dumps(response.json(), indent=4))
-            return True
-        else:
-            print(f"Upload failed with status code: {response.status_code}")
-            print(response.text)
-            return False
+        print(f"\nUpload completed successfully! Total records uploaded: {total_uploaded}")
+        return True
             
     except Exception as e:
         print(f"Error uploading to QuickBase: {str(e)}")
-        # Add more detailed error information
         import traceback
         print("Full error traceback:")
         print(traceback.format_exc())
         return False
+        
 
 def main():
    print("Initializing SharePoint connection...")
@@ -175,7 +186,7 @@ def main():
                
                # Create output filename
                output_file = os.path.join(
-                   r"C:\Users\e329808\OneDrive - Wesco\Documents\QB MDM Updates",
+                   r"C:\Users\sabar\Documents\QB MDM Updates",
                    file.properties["Name"].replace('.xlsb', '.csv')
                )
                

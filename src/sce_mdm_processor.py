@@ -82,7 +82,7 @@ def transform_mdm_file(file_content, output_file):
         
         print("File read successfully. Processing data...")
         df.columns = df.iloc[0]
-        df = df.iloc[:, :88]
+        df = df.iloc[:, :102]
         df = df.iloc[2:].reset_index(drop=True)
         
         df.to_csv(output_file, index=False)
@@ -198,7 +198,8 @@ def main():
                # Create output filename
                output_file = os.path.join(
                    r"\\Wshqnt4sdata\dira\General Data and Automation\Quickbase2024\QB Update Files\QB MDM Files\SCE",
-                   file.properties["Name"].replace('.xlsb', '.csv')
+                   file.properties["Name"].replace('.xlsm', '.csv') if file.properties["Name"].endswith('.xlsm')
+                   else file.properties["Name"].replace('.xlsb', '.csv')
                )
                
                # Transform file

@@ -15,14 +15,14 @@ from io import BytesIO
 
 def get_sharepoint_context():
    
-   # SharePoint credentials and site URL
-   # sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
-   # username = "JuanCarlos.Bayas@wescodist.com"
-   # password = "DhkofiL@512345"
+   #SharePoint credentials and site URL
+   sharepoint_url = "https://wescodist.sharepoint.com/sites/UtilityMDMs-SCE"
+   username = "juan.bayas@wescodist.com"
+   password = "DhkofiL@512345"
    
-   sharepoint_url = "https://stdntpartners.sharepoint.com/sites/MDMQB"
-   username = "Victor.Sabare@studentambassadors.com"
-   password = "ni2b:+AANpP?N7w"
+  # sharepoint_url = "https://stdntpartners.sharepoint.com/sites/MDMQB"
+  #  username = "Victor.Sabare@studentambassadors.com"
+  #  password = "ni2b:+AANpP?N7w"
 
 
    try:
@@ -43,7 +43,7 @@ def check_new_files(ctx, last_check_time):
         web_url = ctx.web.properties['ServerRelativeUrl']
         
         # Construct the full folder path
-        folder_path = f"{web_url}/Shared%20Documents"
+        folder_path = f"{web_url}/Shared%20Documents/SCE/MDM%20Files"
         
         print(f"Accessing folder: {folder_path}")
         
@@ -122,7 +122,7 @@ def upload_to_quickbase(csv_file, batch_size=1000):
             'appId': 'bfdix6cda'
         }
         
-        table_id = 'butqctiz3'
+        table_id = 'brrb3vdk5'
         api_url = f'https://api.quickbase.com/v1/tables/{table_id}'
         
         # Upload batches
@@ -186,7 +186,7 @@ def main():
                
                # Create output filename
                output_file = os.path.join(
-                   r"C:\Users\sabar\Documents\QB MDM Updates",
+                   r"\\Wshqnt4sdata\dira\General Data and Automation\Quickbase2024\QB Update Files\QB MDM Files\SCE",
                    file.properties["Name"].replace('.xlsb', '.csv')
                )
                

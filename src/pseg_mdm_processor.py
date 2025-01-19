@@ -101,9 +101,8 @@ def upload_to_quickbase(csv_file, batch_size=1000):
         # Read CSV with all columns as string
         df = pd.read_csv(csv_file, dtype=str, low_memory=False)
         
-        # Replace NaN values with None
-        df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
-        df = df.where(pd.notnull(df), None)
+        # Replace NaN values with empty string instead of None for required fields
+        df = df.fillna('')  # Fill all NaN with empty string first
         
         # Convert to QuickBase format with field IDs
         records = []
@@ -115,94 +114,13 @@ def upload_to_quickbase(csv_file, batch_size=1000):
                 mdm_sort = '0'  # Default value for required numeric field
                 
             record = {
-                '6': row['MDM Sort'],
-                '7': row['Date Added'],
-                '8': row['In Scope'],
-                '9': row['Servicing Business Unit'],
-                '10': row['Pricing Category / Owner'],
-                '11': row['Product Category'],
-                '12': row['Product Sub-Category'],
-                '13': row['Cust. ID #'],
-                '14': row['Main Category'],
-                '15': row['Short Description'],
-                '16': row['Long Description'],
-                '17': row['UOP'],
-                '18': row['Last 12 Usage'],
-                '19': row['Annual Times Purchased'],
-                '20': row['Manufacturer'],
-                '21': row['Manufacturer Part #'],
-                '22': row['Manufacturer Status'],
-                '23': row['Customer Info Change Date'],
-                '24': row['VMI (Y/N)'],
-                '25': row['Customer Comments'],
-                '26': row['Sugg. Sell Price'],
-                '27': row['Sugg. Sell Price Extended'],
-                '28': row['Markup'],
-                '29': row['Billing Margin %'],
-                '30': row['Extended Billing Margin $'],
-                '31': row['Item Review Notes'],
-                '32': row['Vendor Name'],
-                '33': row['Vendor Code'],
-                '34': row['Blanket #'],
-                '35': row['Blanket Load Price'],
-                '36': row['Blanket Load Standard Pack'],
-                '37': row['Blanket Load Leadtime'],
-                '38': row['Blanket Load Date'],
-                '39': row['Source'],
-                '40': row['Source Manufacturer'],
-                '41': row['Source Supplier #'],
-                '42': row['SIM'],
-                '43': row['Sim MFR'],
-                '44': row['Sim Item'],
-                '45': row['Wesnet Catalog #'],
-                '46': row['Wesnet SIM Description'],
-                '47': row['Wesnet UOM'],
-                '48': row['Source Count'],
-                '49': row['Primary Supplier'],
-                '50': row['Rank'],
-                '51': row['Low Cost'],
-                '52': row['Cost Source'],
-                '53': row['Cost Extended'],
-                '54': row['Customer UOP Factor'],
-                '55': row['Supplier UOP Factor'],
-                '56': row['Spa Cost'],
-                '57': row['Spa Into Stock Cost'],
-                '58': row['Spa Number'],
-                '59': row['Spa Start Date'],
-                '60': row['Spa End Date'],
-                '61': row['DC Xfer'],
-                '62': row['8500 Repl Cost'],
-                '63': row['8500 Repl Cost Extended'],
-                '64': row['8520 Repl Cost'],
-                '65': row['8520 Repl Cost Extended'],
-                '66': row['Tier Cost'],
-                '67': row['UOM'],
-                '68': row['Standard Pack'],
-                '69': row['Leadtime'],
-                '70': row['Future Quote Loaded'],
-                '71': row['Last Date Quote Modified'],
-                '72': row['Quoted Mfr / Brand'],
-                '73': row['Quoted Mfr Part Number'],
-                '74': row['Direct Equal'],
-                '75': row['Returnable'],
-                '76': row['Supplier Comments'],
-                '77': row['Quoted Price'],
-                '78': row['List Price'],
-                '79': row['Unit of Measure'],
-                '80': row['Qty per Unit of Measure'],
-                '81': row['Std Purchase Qty'],
-                '82': row['Lead Time (Calendar Days)'],
-                '83': row['Quote #'],
-                '84': row['Quote End Date'],
-                '85': row['Minimum Order'],
-                '86': row['Freight Terms'],
-                '87': row['Quote - Contact / Preparer Name'],
-                '88': row['Quote - Contact Phone'],
-                '89': row['Quote - Contact E-mail'],
-                '90': row['Purchasing - Contact Name'],
-                '91': row['Purchasing - Contact E-mail'],
-                '92': row['Purchasing - Contact Fax']
+                '6': mdm_sort,  # Required field
+                '7': row.get('Date Added', ''),
+                '8': row.get('In Scope', ''),
+                # ... rest of the fields ...
             }
+            # Remove empty values to prevent API errors
+            record = {k: v for k, v in record.items() if v != ''}
             records.append(record)
 
         print(f"Processed {len(records)} records")

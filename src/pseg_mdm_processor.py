@@ -73,7 +73,7 @@ def transform_mdm_file(file_content, output_file):
         print("File read successfully. Processing data...")
         df.columns = df.iloc[0]
         df = df.iloc[:, :88]
-        df = df.iloc[2:].reset_index(drop=True)
+        df = df.iloc[3:].reset_index(drop=True)
         
         print(f"Saving processed file to: {output_file}")
         df.to_csv(output_file, index=False)

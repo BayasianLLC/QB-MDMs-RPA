@@ -53,11 +53,9 @@ def check_new_files(ctx, last_check_time):
         ctx.load(files)
         files.execute_query()
         
-        # Look for new XLSB or XLSM files
+        # Look for new XLSB files
         new_files = [f for f in files 
-                    if "SCE WCDM" in f.properties["Name"] 
-                    and (f.properties["Name"].lower().endswith('.xlsb') 
-                         or f.properties["Name"].lower().endswith('.xlsm'))]
+                    if "SCE WCDM" in f.properties["Name"]]
         
         print(f"Found {len(new_files)} new files")
         return new_files
@@ -70,14 +68,7 @@ def transform_mdm_file(file_content, output_file):
         print("Starting file transformation...")
         # Use BytesIO for Excel file
         excel_data = BytesIO(file_content)
-        
-        # Check file extension and use appropriate engine
-        if output_file.lower().endswith('.xlsb'):
-            # For XLSB files
-            df = pd.read_excel(excel_data, engine='pyxlsb')
-        else:
-            # For XLSM files
-            df = pd.read_excel(excel_data, engine='openpyxl')
+        df = pd.read_excel(excel_data, engine='pyxlsb')
         
         print("File read successfully. Processing data...")
         df.columns = df.iloc[0]

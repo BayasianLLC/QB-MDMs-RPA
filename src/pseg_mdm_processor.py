@@ -219,28 +219,41 @@ def delete_quickbase_records():
         headers = {
             'QB-Realm-Hostname': 'wesco.quickbase.com',
             'Authorization': 'QB-USER-TOKEN cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/xml'
         }
         
-        # Delete all records query
-        delete_url = 'https://api.quickbase.com/v1/records'
+        # Create XML request to delete all records where MDM Sort > 0
+        xml_request = """<?xml version="1.0" ?>
+        <qdbapi>
+            <apptoken>None</apptoken>
+            <query>{6.GT.0}</query>
+        </qdbapi>"""
         
-        payload = {
-            "from": "butqctiz3",  # Your table ID
-            "where": "{6.GT.'0'}"  # Delete all records where MDM Sort is greater than 0
-        }
+        # Send request to purge records
+        api_url = 'https://wesco.quickbase.com/db/butqctiz3'
         
-        response = requests.delete(
-            delete_url,
+        response = requests.post(
+            f"{api_url}?a=API_PurgeRecords",
             headers=headers,
-            json=payload,
+            data=xml_request.encode('utf-8'),
             verify=False
         )
         
         if response.status_code in [200, 201]:
-            print("Successfully deleted existing records")
-            print("Response:", response.json())
-            return True
+            # Check for successful deletion
+            if '<errcode>0</errcode>' in response.text:
+                # Extract number of deleted records
+                match = re.search(r'<num_records_deleted>(\d+)</num_records_deleted>', response.text)
+                if match:
+                    num_deleted = match.group(1)
+                    print(f"Successfully deleted {num_deleted} records")
+                else:
+                    print("Successfully deleted records (count unknown)")
+                print("Response:", response.text)
+                return True
+            else:
+                print(f"Failed to delete records. Error in response: {response.text}")
+                return False
         else:
             print(f"Failed to delete records. Status code: {response.status_code}")
             print("Error response:", response.text)
@@ -248,8 +261,10 @@ def delete_quickbase_records():
             
     except Exception as e:
         print(f"Error deleting records: {str(e)}")
+        print("Full error traceback:")
+        import traceback
+        print(traceback.format_exc())
         return False
-    df['MDM Sort'] = pd.to_numeric(df['MDM Sort'], errors='coerce')
 
 def clean_xml_string(value):
     if pd.isna(value):
@@ -296,10 +311,108 @@ def upload_to_quickbase(csv_file, batch_size=1000):
     try:
         print("Starting QuickBase update process...")
         
+        # Field mapping
+        field_mapping = {
+            'MDM Sort': 6,
+            'Date Added': 7,
+            'In Scope': 8,
+            'Servicing Business Unit': 9,
+            'Pricing Category / Owner': 10,
+            'Product Category': 11,
+            'Product Sub-Category': 12,
+            'Cust. ID #': 13,
+            'Main Category': 14,
+            'Short Description': 15,
+            'Long Description': 16,
+            'UOP': 17,
+            'Last 12 Usage': 18,
+            'Annual Times Purchased': 19,
+            'Manufacturer': 20,
+            'Manufacturer Part #': 21,
+            'Manufacturer Status': 22,
+            'Customer Info Change Date': 23,
+            'VMI (Y/N)': 24,
+            'Customer Comments': 25,
+            'Sugg. Sell Price': 26,
+            'Sugg. Sell Price Extended': 27,
+            'Markup': 28,
+            'Billing Margin %': 29,
+            'Extended Billing Margin $': 30,
+            'Item Review Notes': 31,
+            'Vendor Name': 32,
+            'Vendor Code': 33,
+            'Blanket #': 34,
+            'Blanket Load Price': 35,
+            'Blanket Load Standard Pack': 36,
+            'Blanket Load Leadtime': 37,
+            'Blanket Load Date': 38,
+            'Source': 39,
+            'Source Manufacturer': 40,
+            'Source Supplier #': 41,
+            'SIM': 42,
+            'Sim MFR': 43,
+            'Sim Item': 44,
+            'Wesnet Catalog #': 45,
+            'Wesnet SIM Description': 46,
+            'Wesnet UOM': 47,
+            'Source Count': 48,
+            'Primary Supplier': 49,
+            'Rank': 50,
+            'Low Cost': 51,
+            'Cost Source': 52,
+            'Cost Extended': 53,
+            'Customer UOP Factor': 54,
+            'Supplier UOP Factor': 55,
+            'Spa Cost': 56,
+            'Spa Into Stock Cost': 57,
+            'Spa Number': 58,
+            'Spa Start Date': 59,
+            'Spa End Date': 60,
+            'DC Xfer': 61,
+            '8500 Repl Cost': 62,
+            '8500 Repl Cost Extended': 63,
+            '8520 Repl Cost': 64,
+            '8520 Repl Cost Extended': 65,
+            'Tier Cost': 66,
+            'UOM': 67,
+            'Standard Pack': 68,
+            'Leadtime': 69,
+            'Future Quote Loaded': 70,
+            'Last Date Quote Modified': 71,
+            'Quoted Mfr / Brand': 72,
+            'Quoted Mfr Part Number': 73,
+            'Direct Equal': 74,
+            'Returnable': 75,
+            'Supplier Comments': 76,
+            'Quoted Price': 77,
+            'List Price': 78,
+            'Unit of Measure': 79,
+            'Qty per Unit of Measure': 80,
+            'Std Purchase Qty': 81,
+            'Lead Time (Calendar Days)': 82,
+            'Quote #': 83,
+            'Quote End Date': 84,
+            'Minimum Order': 85,
+            'Freight Terms': 86,
+            'Quote - Contact / Preparer Name': 87,
+            'Quote - Contact Phone': 88,
+            'Quote - Contact E-mail': 89,
+            'Purchasing - Contact Name': 90,
+            'Purchasing - Contact E-mail': 91,
+            'Purchasing - Contact Fax': 92
+        }
+
         # Read CSV into DataFrame
         df = pd.read_csv(csv_file, dtype=str)
         total_records = len(df)
         print(f"Read {total_records} records from CSV")
+
+        # Keep only columns that exist in QuickBase
+        columns_to_keep = list(field_mapping.keys())
+        extra_columns = set(df.columns) - set(columns_to_keep)
+        if extra_columns:
+            print(f"\nDropping columns not needed in QuickBase: {', '.join(extra_columns)}")
+            df = df[columns_to_keep]
         
         # Keep only first occurrence of each MDM Sort value
         print("\nRemoving duplicate MDM Sort values...")
@@ -307,13 +420,49 @@ def upload_to_quickbase(csv_file, batch_size=1000):
         df = df.drop_duplicates(subset=['MDM Sort'], keep='first')
         removed_count = original_count - len(df)
         print(f"Removed {removed_count} duplicate records. {len(df)} unique records remaining.")
-        
-        # Clean and prepare data
-        df = df.replace({pd.NA: '', 'nan': '', 'NaN': '', None: ''})
-        df = df.fillna('')
-        
-        # Clean special characters and format CSV data
-        def clean_value(val):
+
+        def format_date(date_str):
+            if pd.isna(date_str) or date_str == '':
+                return ''
+            try:
+                if str(date_str).replace('.', '').isdigit():
+                    date_val = float(date_str)
+                    date_obj = pd.Timestamp('1899-12-30') + pd.Timedelta(days=date_val)
+                    return date_obj.strftime('%Y-%m-%d')
+                return date_str
+            except:
+                return date_str
+
+        def format_number(val):
+            if pd.isna(val) or val == '':
+                return ''
+            try:
+                num = float(val)
+                if num.is_integer():
+                    return str(int(num))
+                return f"{num:.2f}"
+            except:
+                return val
+
+        def format_phone(phone_str):
+            if pd.isna(phone_str) or phone_str == '':
+                return ''
+            phone = re.sub(r'[^\d]', '', str(phone_str))
+            if len(phone) == 10:
+                return f"({phone[:3]}) {phone[3:6]}-{phone[6:]}"
+            return phone_str
+
+        def format_yes_no(val):
+            if pd.isna(val) or val == '':
+                return ''
+            val = str(val).upper()
+            if val in ['Y', 'YES', 'TRUE', '1']:
+                return 'Y'
+            if val in ['N', 'NO', 'FALSE', '0']:
+                return 'N'
+            return val
+
+        def clean_text(val):
             if pd.isna(val):
                 return ''
             val = str(val)
@@ -323,13 +472,54 @@ def upload_to_quickbase(csv_file, batch_size=1000):
             val = val.replace('"', '&quot;')
             val = val.replace("'", '&apos;')
             val = ''.join(char for char in val if ord(char) >= 32 or char in '\n\r\t')
-            return val
+            return val.strip()
 
-        # Apply cleaning to all columns
-        for column in df.columns:
-            df[column] = df[column].apply(clean_value)
+        # Define column groups
+        date_columns = [
+            'Date Added', 'Customer Info Change Date', 'Blanket Load Date', 
+            'Spa Start Date', 'Spa End Date', 'Last Date Quote Modified', 
+            'Quote End Date'
+        ]
+        
+        numeric_columns = [
+            'Last 12 Usage', 'Annual Times Purchased', 'Sugg. Sell Price',
+            'Sugg. Sell Price Extended', 'Markup', 'Billing Margin %',
+            'Extended Billing Margin $', 'Blanket Load Price', 'Standard Pack',
+            'Qty per Unit of Measure', 'Std Purchase Qty', 'Lead Time (Calendar Days)',
+            '8500 Repl Cost', '8500 Repl Cost Extended', '8520 Repl Cost',
+            '8520 Repl Cost Extended', 'Tier Cost', 'DC Xfer', 'Vendor Code',
+            'Blanket #', 'SIM', 'Sim MFR', 'Sim Item'
+        ]
+        
+        phone_columns = ['Quote - Contact Phone', 'Purchasing - Contact Fax']
+        
+        yes_no_columns = [
+            'In Scope', 'VMI (Y/N)', 'Future Quote Loaded',
+            'Direct Equal', 'Returnable'
+        ]
+        
+        email_columns = ['Quote - Contact E-mail', 'Purchasing - Contact E-mail']
 
-        # Convert DataFrame to CSV string with proper escaping
+        # Clean data
+        df = df.replace({pd.NA: '', 'nan': '', 'NaN': '', None: ''})
+        df = df.fillna('')
+
+        # Apply formatting
+        for col in df.columns:
+            if col in date_columns:
+                df[col] = df[col].apply(format_date)
+            elif col in numeric_columns:
+                df[col] = df[col].apply(format_number)
+            elif col in phone_columns:
+                df[col] = df[col].apply(format_phone)
+            elif col in yes_no_columns:
+                df[col] = df[col].apply(format_yes_no)
+            elif col in email_columns:
+                df[col] = df[col].apply(lambda x: str(x).strip() if not pd.isna(x) else '')
+            else:
+                df[col] = df[col].apply(clean_text)
+
+        # Convert DataFrame to CSV string
         csv_data = df.to_csv(index=False, escapechar='\\', doublequote=True)
         
         # Set up API request
@@ -338,6 +528,10 @@ def upload_to_quickbase(csv_file, batch_size=1000):
             'Authorization': 'QB-USER-TOKEN cacrrx_vcs_0_ezvd3icw7ds8wdegdjbwbigxm45',
             'Content-Type': 'application/xml'
         }
+
+        # Create the clist parameter based on the column order in the DataFrame
+        column_list = df.columns.tolist()
+        clist = '.'.join([str(field_mapping[col]) for col in column_list])
         
         # Create XML request
         xml_request = f"""<?xml version="1.0" encoding="UTF-8" ?>
@@ -345,11 +539,11 @@ def upload_to_quickbase(csv_file, batch_size=1000):
             <apptoken>None</apptoken>
             <udata>mydata</udata>
             <records_csv><![CDATA[{csv_data}]]></records_csv>
-            <clist>6.7.8.9.10.11.12.13.14.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33.34.35.36.37.38.39.40.41.42.43.44.45.46.47.48.49.50.51.52.53.54.55.56.57.58.59.60.61.62.63.64.65.66.67.68.69.70.71.72.73.74.75.76.77.78.79.80.81.82.83.84.85.86.87.88</clist>
+            <clist>{clist}</clist>
             <skipfirst>1</skipfirst>
         </qdbapi>"""
         
-        # Send request to import CSV
+        # Send request
         api_url = 'https://wesco.quickbase.com/db/butqctiz3'
         
         response = requests.post(
@@ -363,11 +557,21 @@ def upload_to_quickbase(csv_file, batch_size=1000):
         print(f"Response Content: {response.text}")
         
         if response.status_code in [200, 201]:
-            if 'errcode>0<' not in response.text:
-                print("Import successful!")
-                return True
+            if '<errcode>0</errcode>' in response.text:
+                records_added = re.search(r'<num_recs_added>(\d+)</num_recs_added>', response.text)
+                if records_added:
+                    num_added = records_added.group(1)
+                    print(f"\nSuccess! Added {num_added} records to QuickBase")
+                    return True
+                else:
+                    print("\nSuccess! Records added to QuickBase")
+                    return True
             else:
-                print(f"API Error: {response.text}")
+                error_text = re.search(r'<errtext>(.*?)</errtext>', response.text)
+                if error_text:
+                    print(f"Upload failed: {error_text.group(1)}")
+                else:
+                    print("Upload failed with unknown error")
                 return False
         else:
             print(f"Upload failed with status code: {response.status_code}")

@@ -199,14 +199,13 @@ def main():
                # Create output filename
                output_file = os.path.join(
                    r"\\Wshqnt4sdata\dira\General Data and Automation\Quickbase2024\QB Update Files\QB MDM Files\PSE",
-                   file.properties["Name"].replace('.xlsb', '.csv')
+                   file.properties["Name"].replace('.xlsm', '.csv') if file.properties["Name"].endswith('.xlsm')
+                   else file.properties["Name"].replace('.xlsb', '.csv')
                )
                
                # Transform file
                transform_mdm_file(file_content, output_file)
-           
-           # Update last check time
-           last_check_time = datetime.now()
+        
            
            # Wait before next check
            print(f"Waiting 5 minutes before next check...")

@@ -7,6 +7,7 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.authentication_context import AuthenticationContext
 import time
+
 from quickbase_client.orm.table import QuickbaseTable
 from quickbase_client.orm.app import QuickbaseApp
 from quickbase_client import QuickbaseTableClient
@@ -74,6 +75,8 @@ def transform_mdm_file(file_content, output_file):
         df.columns = df.iloc[0]
         df = df.iloc[:, :88]
         df = df.iloc[3:].reset_index(drop=True)
+
+        df['MDM Sort'] = pd.to_numeric(df['MDM_Sort'], errors='coerce').fillna(0)
         
         print(f"Saving processed file to: {output_file}")
         df.to_csv(output_file, index=False)
@@ -103,12 +106,14 @@ def upload_to_quickbase(csv_file, batch_size=1000):
         # Replace NaN values with None
         df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
         df = df.where(pd.notnull(df), None)
+
+        df['MDM Sort'] = df['MDM Sort'].fillna('o')
         
         # Convert to QuickBase format with field IDs
         records = []
         for _, row in df.iterrows():
             record = {
-                '6': row['MDM Sort'],
+                '6': str(row['MDM Sort']),
                 '7': row['Date Added'],
                 '8': row['In Scope'],
                 '9': row['Servicing Business Unit'],
@@ -196,6 +201,7 @@ def upload_to_quickbase(csv_file, batch_size=1000):
                 '91': row['Purchasing - Contact E-mail'],
                 '92': row['Purchasing - Contact Fax']
             }
+            record = {k: v for k, v in record.items() if v is not None}
             records.append(record)
         
         # Split records into batches

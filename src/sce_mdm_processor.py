@@ -55,7 +55,7 @@ def check_new_files(ctx, last_check_time):
         
         # Look for new XLSB or XLSM files
         new_files = [f for f in files 
-                    if "PSEG MDM" in f.properties["Name"] 
+                    if "SCE WCDM" in f.properties["Name"] 
                     and (f.properties["Name"].lower().endswith('.xlsb') 
                          or f.properties["Name"].lower().endswith('.xlsm'))]
         
@@ -73,7 +73,7 @@ def transform_mdm_file(file_content, output_file):
         excel_data = BytesIO(file_content)
         
         # Check file extension and use appropriate engine
-        if output_file.lower().endswith('.xlsb.csv'):
+        if output_file.lower().endswith('.xlsb'):
             # For XLSB files
             df = pd.read_excel(excel_data, engine='pyxlsb')
         else:
@@ -85,8 +85,9 @@ def transform_mdm_file(file_content, output_file):
         df = df.iloc[:, :88]
         df = df.iloc[2:].reset_index(drop=True)
         
-        print(f"Saving processed file to: {output_file}")
         df.to_csv(output_file, index=False)
+        print(f"Saving processed file to: {output_file}")
+
         
         # Upload to QuickBase
         if upload_to_quickbase(output_file):

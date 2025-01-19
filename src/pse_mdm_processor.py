@@ -16,7 +16,7 @@ from io import BytesIO
 def get_sharepoint_context():
    
    #SharePoint credentials and site URL
-   sharepoint_url = "https://wescodist.sharepoint.com/sites/SalesOpsRPA"
+   sharepoint_url = "https://wescodist.sharepoint.com/sites/UtilityMDMs-PSE"
    username = "juan.bayas@wescodist.com"
    password = "DhkofiL@512345"
    
@@ -43,7 +43,7 @@ def check_new_files(ctx, last_check_time):
         web_url = ctx.web.properties['ServerRelativeUrl']
         
         # Construct the full folder path
-        folder_path = f"{web_url}/Shared%20Documents"
+        folder_path = f"{web_url}/Shared%20Documents/PSE/MDMs"
         
         print(f"Accessing folder: {folder_path}")
         
@@ -53,9 +53,11 @@ def check_new_files(ctx, last_check_time):
         ctx.load(files)
         files.execute_query()
         
-        # Look for new XLSB files
+        # Look for new XLSB or XLSM files
         new_files = [f for f in files 
-                    if "PSEG MDM" in f.properties["Name"]]
+                    if "PSE WCDM" in f.properties["Name"] 
+                    and (f.properties["Name"].lower().endswith('.xlsb') 
+                         or f.properties["Name"].lower().endswith('.xlsm'))]
         
         print(f"Found {len(new_files)} new files")
         return new_files
@@ -63,20 +65,29 @@ def check_new_files(ctx, last_check_time):
         print(f"Error checking SharePoint: {str(e)}")
         return []
 
+
 def transform_mdm_file(file_content, output_file):
     try:
         print("Starting file transformation...")
         # Use BytesIO for Excel file
         excel_data = BytesIO(file_content)
-        df = pd.read_excel(excel_data, engine='pyxlsb')
+        
+        # Check file extension and use appropriate engine
+        if output_file.lower().endswith('.xlsb'):
+            # For XLSB files
+            df = pd.read_excel(excel_data, engine='pyxlsb')
+        else:
+            # For XLSM files
+            df = pd.read_excel(excel_data, engine='openpyxl')
         
         print("File read successfully. Processing data...")
         df.columns = df.iloc[0]
         df = df.iloc[:, :88]
         df = df.iloc[2:].reset_index(drop=True)
         
-        print(f"Saving processed file to: {output_file}")
         df.to_csv(output_file, index=False)
+        print(f"Saving processed file to: {output_file}")
+
         
         # Upload to QuickBase
         if upload_to_quickbase(output_file):
@@ -89,6 +100,7 @@ def transform_mdm_file(file_content, output_file):
     except Exception as e:
         print(f"Error processing file: {str(e)}")
         return False
+
 
 
 def upload_to_quickbase(csv_file, batch_size=1000):
@@ -186,7 +198,7 @@ def main():
                
                # Create output filename
                output_file = os.path.join(
-                   r"\\Wshqnt4sdata\dira\General Data and Automation\Quickbase2024\QB Update Files\QB MDM Files\PSEG`",
+                   r"\\Wshqnt4sdata\dira\General Data and Automation\Quickbase2024\QB Update Files\QB MDM Files\PSE",
                    file.properties["Name"].replace('.xlsb', '.csv')
                )
                

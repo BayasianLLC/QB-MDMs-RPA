@@ -55,7 +55,7 @@ def check_new_files(ctx, last_check_time):
         
         # Look for new XLSB or XLSM files
         new_files = [f for f in files 
-                    if "PSEG MDM" in f.properties["Name"] 
+                    if "SCE WCDM" in f.properties["Name"] 
                     and (f.properties["Name"].lower().endswith('.xlsb') 
                          or f.properties["Name"].lower().endswith('.xlsm'))]
         

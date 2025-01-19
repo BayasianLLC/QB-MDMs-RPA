@@ -53,9 +53,11 @@ def check_new_files(ctx, last_check_time):
         ctx.load(files)
         files.execute_query()
         
-        # Look for new XLSB files
+        # Look for new XLSB or XLSM files
         new_files = [f for f in files 
-                    if "SCE WCDM" in f.properties["Name"]]
+                    if "PSEG MDM" in f.properties["Name"] 
+                    and (f.properties["Name"].lower().endswith('.xlsb') 
+                         or f.properties["Name"].lower().endswith('.xlsm'))]
         
         print(f"Found {len(new_files)} new files")
         return new_files
@@ -63,12 +65,20 @@ def check_new_files(ctx, last_check_time):
         print(f"Error checking SharePoint: {str(e)}")
         return []
 
+
 def transform_mdm_file(file_content, output_file):
     try:
         print("Starting file transformation...")
         # Use BytesIO for Excel file
         excel_data = BytesIO(file_content)
-        df = pd.read_excel(excel_data, engine='pyxlsb')
+        
+        # Check file extension and use appropriate engine
+        if output_file.lower().endswith('.xlsb.csv'):
+            # For XLSB files
+            df = pd.read_excel(excel_data, engine='pyxlsb')
+        else:
+            # For XLSM files
+            df = pd.read_excel(excel_data, engine='openpyxl')
         
         print("File read successfully. Processing data...")
         df.columns = df.iloc[0]

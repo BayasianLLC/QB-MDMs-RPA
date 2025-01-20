@@ -1,4 +1,3 @@
-import json
 import pandas as pd
 import os
 from datetime import datetime
@@ -11,9 +10,6 @@ import html
 import re
 import urllib3
 
-from quickbase_client.orm.table import QuickbaseTable
-from quickbase_client.orm.app import QuickbaseApp
-from quickbase_client import QuickbaseTableClient
 from io import BytesIO
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -187,7 +183,7 @@ def transform_mdm_file(file_content, output_file):
         # Remove header row
         df = df.iloc[1:]
     
-        # Keep first 92 columns
+        # Keep first 87 columns
         df = df.iloc[:, :88]
         df['MDM Sort'] = pd.to_numeric(df['MDM Sort'], errors='coerce')
 

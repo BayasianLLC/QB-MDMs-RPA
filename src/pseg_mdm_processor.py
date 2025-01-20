@@ -183,7 +183,7 @@ def transform_mdm_file(file_content, output_file):
         # Remove header row
         df = df.iloc[1:]
     
-        # Keep first 87 columns
+        # Keep first 87 coumns
         df = df.iloc[:, :88]
         df['MDM Sort'] = pd.to_numeric(df['MDM Sort'], errors='coerce')
 
@@ -226,7 +226,7 @@ def delete_quickbase_records():
         </qdbapi>"""
         
         # Send request to purge records
-        api_url = 'https://wesco.quickbase.com/db/butqctiz3'
+        api_url = 'https://wesco.quickbase.com/db/bust272rx'
         
         response = requests.post(
             f"{api_url}?a=API_PurgeRecords",
@@ -540,7 +540,7 @@ def upload_to_quickbase(csv_file, batch_size=1000):
         </qdbapi>"""
         
         # Send request
-        api_url = 'https://wesco.quickbase.com/db/butqctiz3'
+        api_url = 'https://wesco.quickbase.com/db/bust272rx'
         
         response = requests.post(
             f"{api_url}?a=API_ImportFromCSV",
